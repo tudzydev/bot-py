@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PyAcademy AI - Learn Python interactive Bot</title>
+  <!-- SEO Tags -->
+  <meta name="description" content="Learn Python interactive coding assistant. Play with real code using in-browser Pyodide, solve quizzes, and chat with your AI programming tutor.">
+  <meta name="keywords" content="Python, learn Python, interactive compiler, coding tutor, AI mentor, Pyodide, W3Schools Python">
+  
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Prism.js Syntax Highlighting CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Pyodide Loader Overlay -->
+  <div id="loader-overlay" class="loader-overlay">
+    <div class="loader-card">
+      <div class="logo-animation">
+        <i class="fab fa-python python-pulse"></i>
+      </div>
+      <h2>Initializing PyAcademy Engine</h2>
+      <p id="loader-text">Loading WebAssembly Python runtime (Pyodide)...</p>
+      <div class="progress-bar-container">
+        <div id="loader-progress" class="progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <i class="fab fa-python logo-icon"></i>
+        <h1>PyAcademy <span class="badge">AI Tutor</span></h1>
+      </div>
+      <div class="header-actions">
+        <div class="api-key-badge" id="api-status-badge" onclick="toggleSettingsModal()">
+          <i class="fas fa-key"></i> <span>Local Mode</span>
+        </div>
+        <button class="settings-btn" onclick="toggleSettingsModal()" aria-label="Settings">
+          <i class="fas fa-cog"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Layout -->
+    <div class="workspace">
+      
+      <!-- Left Column: Syllabus/Modules Navigation -->
+      <aside class="syllabus-panel" aria-label="Course Curriculum">
+        <div class="panel-header">
+          <h3><i class="fas fa-graduation-cap"></i> Curriculum</h3>
+          <span class="progress-percentage" id="overall-progress">0% Done</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="overall-progress-bar"></div>
+        </div>
+        <nav class="modules-list" id="modules-nav"></nav>
+      </aside>
+
+      <!-- Middle Column: Lesson Viewer & Sandbox Code Runner -->
+      <main class="content-panel">
+        <!-- Module Heading and Tab Control -->
+        <div class="content-header">
+          <div class="topic-meta">
+            <span class="topic-category" id="current-category">Module</span>
+            <h2 id="current-topic-title">Loading Lesson...</h2>
+          </div>
+          <div class="tab-control">
+            <button class="tab-btn active" id="tab-lesson" onclick="switchTab('lesson')">
+              <i class="fas fa-book-open"></i> Lesson
+            </button>
+            <button class="tab-btn" id="tab-editor" onclick="switchTab('editor')">
+              <i class="fas fa-code"></i> Editor
+            </button>
+            <button class="tab-btn" id="tab-quiz" onclick="switchTab('quiz')">
+              <i class="fas fa-question-circle"></i> Quiz
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab contents -->
+        <div class="tab-body">
+          <!-- Lesson Tab -->
+          <section id="pane-lesson" class="tab-pane active">
+            <div class="lesson-scrollable" id="lesson-content">
+              <!-- Content dynamically rendered via JS -->
+            </div>
+            <div class="lesson-footer">
+              <button class="action-btn primary-btn" onclick="goToEditorWithSnippet()">
+                <i class="fas fa-terminal"></i> Try in Playground &rarr;
+              </button>
+            </div>
+          </section>
+
+          <!-- Interactive Code Editor Tab -->
+          <section id="pane-editor" class="tab-pane">
+            <div class="editor-grid">
+              <div class="editor-section">
+                <div class="panel-subheader">
+                  <span><i class="fas fa-edit"></i> main.py</span>
+                  <div class="editor-actions">
+                    <button class="editor-action-btn" onclick="resetEditorCode()" title="Reset to initial example">
+                      <i class="fas fa-undo"></i> Reset
+                    </button>
+                  </div>
+                </div>
+                <!-- Textarea overlaid with Prism code wrapper for coding playground -->
+                <div class="editor-textarea-wrapper">
+                  <div class="line-numbers" id="line-numbers">1</div>
+                  <textarea id="code-editor" spellcheck="false" oninput="updateEditorHighlighting()" onkeydown="handleTabPress(event)"></textarea>
+                  <pre id="editor-highlight-pre"><code class="language-python" id="editor-highlight-code"></code></pre>
+                </div>
+              </div>
+              
+              <div class="console-section">
+                <div class="panel-subheader">
+                  <span><i class="fas fa-terminal"></i> Terminal Output</span>
+                  <button class="run-btn" id="run-code-btn" onclick="executePythonCode()">
+                    <i class="fas fa-play"></i> Run Code
+                  </button>
+                </div>
+                <div class="console-terminal" id="terminal-output">
+                  <span class="terminal-placeholder">Press "Run Code" to compile and execute Python scripts locally...</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Quiz Tab -->
+          <section id="pane-quiz" class="tab-pane">
+            <div class="quiz-container" id="quiz-content">
+              <!-- Quiz rendered dynamically -->
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <!-- Right Column: AI Mentor Chat -->
+      <aside class="ai-panel" aria-label="AI Coding Mentor">
+        <div class="ai-header">
+          <div class="ai-status-indicator">
+            <div class="status-dot pulsing" id="tutor-dot"></div>
+            <div>
+              <h4>PyBot Mentor</h4>
+              <p id="tutor-status-text">Ready to help</p>
+            </div>
+          </div>
+          <button class="clear-chat-btn" onclick="clearChat()" title="Clear Chat History">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+        
+        <!-- Chat History -->
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-message bot">
+            <div class="avatar"><i class="fas fa-robot"></i></div>
+            <div class="message-bubble">
+              Hello! I am your PyAcademy AI Mentor. I can explain code snippets, debug errors in your playground, or ask custom questions. How can I help you today?
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input & Quick Prompts -->
+        <div class="chat-footer">
+          <div class="quick-prompts">
+            <button class="quick-btn" onclick="askQuickPrompt('explain')">🔍 Explain Lesson</button>
+            <button class="quick-btn" onclick="askQuickPrompt('debug')">🪲 Debug My Code</button>
+            <button class="quick-btn" onclick="askQuickPrompt('challenge')">💡 Give Challenge</button>
+          </div>
+          <div class="chat-input-wrapper">
+            <input type="text" id="chat-input" placeholder="Ask your Python mentor..." onkeydown="handleChatSubmit(event)">
+            <button class="send-btn" id="send-chat-btn" onclick="submitChatMessage()">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- Settings / API Key Modal -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h3><i class="fas fa-cog"></i> Settings</h3>
+        <button class="close-btn" onclick="toggleSettingsModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-group">
+          <label for="gemini-api-key">Gemini API Key (Optional)</label>
+          <input type="password" id="gemini-api-key" placeholder="AIzaSy...">
+          <small class="help-text">
+            Provide a Google Gemini API Key to enable fully dynamic, intelligent chat responses from the mentor bot. If left blank, PyAcademy uses a smart local curriculum tutor.
+          </small>
+        </div>
+        <div class="settings-group">
+          <label>API Key Tutorial</label>
+          <p class="modal-info-text">
+            Get a free key from the <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer">Google AI Studio</a>. Your key is stored securely in your browser's local storage and is only sent directly to Google APIs.
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn secondary-btn" onclick="toggleSettingsModal()">Cancel</button>
+        <button class="action-btn primary-btn" onclick="saveSettings()">Save & Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pyodide Python execution core -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js"></script>
+  <!-- Prism JS for text rendering and editor typing highlights -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  
+  <!-- Main Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
